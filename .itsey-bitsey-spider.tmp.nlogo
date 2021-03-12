@@ -30,7 +30,7 @@ ticks
 @#$#@#$#@
 ## WHAT IS IT?
 
-A model with a spider
+
 
 ## HOW IT WORKS
 
