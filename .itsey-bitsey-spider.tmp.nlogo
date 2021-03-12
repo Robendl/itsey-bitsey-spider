@@ -30,7 +30,10 @@ to go
   if not any? turtles [
     stop
   ]
-  move-flies
+  ask flies [
+    move-flies
+  ]
+  tick
 end
 
 to move-flies
@@ -112,6 +115,23 @@ number-of-flies
 1
 NIL
 HORIZONTAL
+
+BUTTON
+94
+15
+157
+48
+go
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
