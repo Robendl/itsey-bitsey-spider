@@ -1,10 +1,9 @@
 breed [ spiders a-spider ]
 breed [ flies a-fly ]
 
-spiders-own
-[ energy
-  web
-]
+turtles-own [ energy ]
+
+spiders-own [ web ]
 
 to setup
   clear-all
@@ -16,12 +15,13 @@ to setup
     move-to one-of patches with [pxcor > 2 or pxcor < -2 and pycor > 2 or pycor < -2]
     set color red
     set shape "spider"
-    set energy 100
+    set energy 50
   ]
   create-flies number-of-flies [
     move-to one-of patches with [pxcor < 2 and pxcor > -2 and pycor < 2 and pycor > -2]
     set color black
     set shape "butterfly"
+    set energy 10
   ]
   reset-ticks
 end
@@ -30,14 +30,18 @@ to go
   if not any? turtles [
     stop
   ]
+  ;; spawn-flies
   ask flies [
     move-flies
   ]
   ask spiders [
     eat-flies
+    check-if-dead
+    reproduce
+    stay
   ]
-  my-update-plots
   tick
+  my-update-plots
 end
 
 to move-flies
@@ -49,10 +53,37 @@ end
 to eat-flies
   if any? flies-here [
     let target one-of flies-here
+    set energy energy + 10
     ask target [
       die
     ]
-    set energy energy + 1
+  ]
+end
+
+
+to reproduce
+  if energy > 100 [
+    set energy energy - 50
+    hatch 1 [set energy 50]
+  ]
+end
+
+to check-if-dead
+  if energy < 0 [
+    die
+  ]
+end
+
+to stay
+  set energy energy - 1
+end
+
+to spawn-flies
+  create-flies 1 [
+    move-to one-of patches with [pxcor < 2 and pxcor > -2 and pycor < 2 and pycor > -2]
+    set color black
+    set shape "butterfly"
+    set energy 10
   ]
 end
 
@@ -117,7 +148,7 @@ number-of-spiders
 number-of-spiders
 1
 100
-10.0
+100.0
 1
 1
 NIL
