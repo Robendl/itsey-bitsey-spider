@@ -3,7 +3,15 @@ breed [ flies a-fly ]
 
 turtles-own [ energy ]
 
-spiders-own [ web ]
+spiders-own
+[web-patches
+]
+
+patches-own
+[ spider-number
+]
+
+globals [ free-flies ]
 
 to setup
   clear-all
@@ -16,8 +24,9 @@ to setup
     set color red
     set shape "spider"
     set energy 50
+    set web-patches (list)
   ]
-  create-flies number-of-flies [
+   create-flies number-of-flies [
     move-to one-of patches with [pxcor < 2 and pxcor > -2 and pycor < 2 and pycor > -2]
     set color black
     set shape "butterfly"
@@ -33,15 +42,19 @@ to go
   ;; spawn-flies
   ask flies [
     move-flies
+    check-if-free
   ]
   ask spiders [
     eat-flies
     check-if-dead
     reproduce
     stay
+    move-spider
+    make-web
+    eat-flies
   ]
-  tick
   my-update-plots
+  tick
 end
 
 to move-flies
@@ -50,10 +63,34 @@ to move-flies
   forward 1
 end
 
+
+to check-if-free
+  if any? flies-on patches with [pxcor < -15 or pxcor > 15 and pycor < -15 or pxcor > 15] [
+    set free-flies free-flies + 1
+    die
+  ]
+end
+
+to make-web
+  if pcolor = blue [
+    set pcolor white
+    set web-patches lput patch-here web-patches
+  ]
+  show web-patches
+end
+
+to move-spider
+  if energy > movement-cost-spider [
+    forward 1
+    set energy energy - movement-cost-spider
+  ]
+end
+
+
 to eat-flies
   if any? flies-here [
     let target one-of flies-here
-    set energy energy + 10
+    set energy energy + energy-gained-from-fly
     ask target [
       die
     ]
@@ -148,7 +185,7 @@ number-of-spiders
 number-of-spiders
 1
 100
-100.0
+10.0
 1
 1
 NIL
@@ -187,10 +224,10 @@ NIL
 0
 
 PLOT
-3
-174
-203
-324
+0
+246
+200
+396
 Population over time
 time
 amount
@@ -204,6 +241,47 @@ true
 PENS
 "spiders" 1.0 0 -2674135 true "" ""
 "flies" 1.0 0 -16777216 true "" ""
+
+SLIDER
+12
+153
+185
+186
+movement-cost-spider
+movement-cost-spider
+0
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+13
+197
+192
+230
+energy-gained-from-fly
+energy-gained-from-fly
+0
+100
+52.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+11
+410
+134
+455
+Number of free flies
+free-flies
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
