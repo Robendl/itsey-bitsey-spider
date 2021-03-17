@@ -33,6 +33,10 @@ to go
   ask flies [
     move-flies
   ]
+  ask spiders [
+    eat-flies
+  ]
+  my-update-plots
   tick
 end
 
@@ -40,6 +44,24 @@ to move-flies
   rt random 90
   lt random 90
   forward 1
+end
+
+to eat-flies
+  if any? flies-here [
+    let target one-of flies-here
+    ask target [
+      die
+    ]
+    set energy energy + 1
+  ]
+end
+
+to my-update-plots
+  set-current-plot-pen "flies"
+  plot count flies
+
+  set-current-plot-pen "spiders"
+  plot count spiders
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -56,8 +78,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -16
 16
@@ -95,7 +117,7 @@ number-of-spiders
 number-of-spiders
 1
 100
-43.0
+10.0
 1
 1
 NIL
@@ -110,18 +132,18 @@ number-of-flies
 number-of-flies
 1
 100
-5.0
+100.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-94
-15
-157
-48
-go
+100
+17
+163
+50
+Go
 go
 T
 1
@@ -132,6 +154,25 @@ NIL
 NIL
 NIL
 0
+
+PLOT
+3
+174
+203
+324
+Amount of agents
+time
+amount
+0.0
+10.0
+0.0
+100.0
+true
+true
+"" ""
+PENS
+"spiders" 1.0 0 -2674135 true "" ""
+"flies" 1.0 0 -16777216 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?
