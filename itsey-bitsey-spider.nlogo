@@ -5,26 +5,38 @@ turtles-own [ energy ]
 
 spiders-own
 [web-patches
+  radius
+  target-patch
+  stalling-threshold
 ]
 
 patches-own
 [ spider-number
+  fly-on-patch
 ]
 
 globals [ free-flies ]
 
 to setup
   clear-all
-  ask patches [set pcolor blue]
+  ask patches [
+    set pcolor blue
+    set fly-on-patch false
+  ]
   ask patches with [pxcor < 2 and pxcor > -2 and pycor < 2 and pycor > -2] [
     set pcolor grey
   ]
+  ask patches with [pxcor < -25 or pxcor > 25 or pycor < -25 or pycor > 25] [
+    set pcolor green
+  ]
   create-spiders number-of-spiders [
-    move-to one-of patches with [pxcor > 2 or pxcor < -2 and pycor > 2 or pycor < -2]
+    move-to one-of patches with [pcolor = blue]
     set color red
     set shape "spider"
-    set energy 50
+    set energy starting-energy-spider
     set web-patches (list)
+    set radius 4
+    set target-patch false
   ]
    create-flies number-of-flies [
     move-to one-of patches with [pxcor < 2 and pxcor > -2 and pycor < 2 and pycor > -2]
@@ -36,7 +48,7 @@ to setup
 end
 
 to go
-  if not any? turtles [
+  if not any? flies [
     stop
   ]
   ;; spawn-flies
@@ -48,9 +60,9 @@ to go
     eat-flies
     check-if-dead
     reproduce
-    stay
-    move-spider
+    ;stay
     make-web
+    move-spider
     eat-flies
   ]
   my-update-plots
@@ -60,12 +72,16 @@ end
 to move-flies
   rt random 90
   lt random 90
-  forward 1
+  ifelse pcolor != white [
+    forward 1
+  ]
+  [
+    ask patch-here [set fly-on-patch true]
+  ]
 end
 
-
 to check-if-free
-  if any? flies-on patches with [pxcor < -15 or pxcor > 15 and pycor < -15 or pxcor > 15] [
+  if any? flies-on patches with [pcolor = green] [
     set free-flies free-flies + 1
     die
   ]
@@ -75,17 +91,55 @@ to make-web
   if pcolor = blue [
     set pcolor white
     set web-patches lput patch-here web-patches
+    set energy energy - web-making-cost
   ]
-  show web-patches
+  ;;show web-patches
 end
 
 to move-spider
-  if energy > movement-cost-spider [
+  if target-patch = false [
+    let center-web-patch patch-here
+    if not empty? web-patches [
+      let center-web-x round mean [pxcor] of patch-set web-patches
+      let center-web-y round mean [pycor] of patch-set web-patches
+      set center-web-patch patch center-web-x center-web-y
+    ]
+
+    set target-patch min-one-of patches with [pcolor = blue] [2 * distance center-web-patch + distance myself]
+
+    let max-web-distance 0
+    ask patch-set web-patches [
+      if distance center-web-patch > max-web-distance [
+        set max-web-distance distance center-web-patch
+      ]
+    ]
+
+    set stalling-threshold movement-cost-spider * (ceiling distance center-web-patch + ceiling max-web-distance)
+
+    if energy < stalling-threshold [
+      set target-patch center-web-patch
+    ]
+
+    let temp-target-patch false
+    ask patch-set web-patches[
+      if fly-on-patch [
+        set temp-target-patch self
+      ]
+    ]
+    if temp-target-patch != false [
+      set target-patch temp-target-patch
+    ]
+  ]
+
+  ifelse patch-here != target-patch [
+    face target-patch
     forward 1
     set energy energy - movement-cost-spider
   ]
+  [
+    set target-patch false
+  ]
 end
-
 
 to eat-flies
   if any? flies-here [
@@ -94,12 +148,13 @@ to eat-flies
     ask target [
       die
     ]
+    ask patch-here [set fly-on-patch false]
   ]
 end
 
 
 to reproduce
-  if energy > 100 [
+  if energy > reproduction-threshold [
     set energy energy - 50
     hatch 1 [set energy 50]
   ]
@@ -135,8 +190,8 @@ end
 GRAPHICS-WINDOW
 210
 10
-647
-448
+907
+708
 -1
 -1
 13.0
@@ -149,12 +204,12 @@ GRAPHICS-WINDOW
 0
 0
 1
--16
-16
--16
-16
-0
-0
+-26
+26
+-26
+26
+1
+1
 1
 ticks
 30.0
@@ -185,7 +240,7 @@ number-of-spiders
 number-of-spiders
 1
 100
-10.0
+22.0
 1
 1
 NIL
@@ -200,7 +255,7 @@ number-of-flies
 number-of-flies
 1
 100
-100.0
+33.0
 1
 1
 NIL
@@ -224,10 +279,10 @@ NIL
 0
 
 PLOT
-0
-246
-200
-396
+6
+416
+206
+566
 Population over time
 time
 amount
@@ -251,7 +306,7 @@ movement-cost-spider
 movement-cost-spider
 0
 100
-1.0
+11.0
 1
 1
 NIL
@@ -266,22 +321,67 @@ energy-gained-from-fly
 energy-gained-from-fly
 0
 100
-52.0
+50.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-11
-410
-134
-455
+17
+580
+140
+625
 Number of free flies
 free-flies
 17
 1
 11
+
+SLIDER
+14
+246
+186
+279
+web-making-cost
+web-making-cost
+0
+10
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+14
+343
+198
+376
+reproduction-threshold
+reproduction-threshold
+0
+1000
+95.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+17
+297
+191
+330
+starting-energy-spider
+starting-energy-spider
+0
+300
+106.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
