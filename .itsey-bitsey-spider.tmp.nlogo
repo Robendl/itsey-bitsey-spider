@@ -1,43 +1,47 @@
 breed [ spiders a-spider ]
 breed [ flies a-fly ]
 
-turtles-own [ energy ]
-
-spiders-own
-[web-patches
-  radius
-  target-patch
-  stalling-threshold
+turtles-own [
+  energy
 ]
 
-patches-own
-[ spider-number
-  fly-on-patch
+spiders-own[
+  web-patches          ; spiders use this to keep track of their webs
+  target-patch         ; the patch the spider is currently trying to get to
+  stalling-threshold   ; the energy threshold that the spider calculates to determine when to stop making more webs
+]
+
+patches-own[
+  fly-on-patch         ; boolean that that turns to true when a web-patch has a fly on it
 ]
 
 globals [ free-flies ]
 
 to setup
   clear-all
+  ; make background blue and set fly-on-patch to default value false
   ask patches [
     set pcolor blue
     set fly-on-patch false
   ]
+  ; making the thrashcan from which the flies spawn grey
   ask patches with [pxcor < 2 and pxcor > -2 and pycor < 2 and pycor > -2] [
     set pcolor grey
   ]
+  ; making the world border green, flies are free when they reach this border
   ask patches with [pxcor < -25 or pxcor > 25 or pycor < -25 or pycor > 25] [
     set pcolor green
   ]
+  ; initializing spiders
   create-spiders number-of-spiders [
     move-to one-of patches with [pcolor = blue]
     set color red
     set shape "spider"
     set energy starting-energy-spider
     set web-patches (list)
-    set radius 4
     set target-patch false
   ]
+  ; initializing flies
    create-flies number-of-flies [
     move-to one-of patches with [pxcor < 2 and pxcor > -2 and pycor < 2 and pycor > -2]
     set color black
@@ -51,7 +55,6 @@ to go
   if not any? flies [
     stop
   ]
-  ;; spawn-flies
   ask flies [
     move-flies
     check-if-free
@@ -60,7 +63,6 @@ to go
     eat-flies
     check-if-dead
     reproduce
-    ;stay
     make-web
     move-spider
     eat-flies
@@ -69,6 +71,7 @@ to go
   tick
 end
 
+; flies turn randomly and then move if they are not in a web.
 to move-flies
   rt random 90
   lt random 90
@@ -76,7 +79,7 @@ to move-flies
     forward 1
   ]
   [
-    ask patch-here [set fly-on-patch true]
+    ask patch-here [set fly-on-patch true] ; used to tell the spider that their is a fly
   ]
 end
 
@@ -88,27 +91,28 @@ to check-if-free
 end
 
 to make-web
-  if pcolor = blue [
+  if pcolor = blue and energy > web-making-cost [
     set pcolor white
     set web-patches lput patch-here web-patches
     set energy energy - web-making-cost
   ]
-  ;;show web-patches
 end
 
+; the spider can choose 3 different kinds of target-patches: a patch where he wants to make a web on, the center of the web and
+; a web-patch with a fly on it.
 to move-spider
   if target-patch = false [
-    ifelse not empty? web-patches [
+    let center-web-patch patch-here
+    if not empty? web-patches [
       let center-web-x round mean [pxcor] of patch-set web-patches
       let center-web-y round mean [pycor] of patch-set web-patches
-      let center-web-patch patch center-web-x center-web-y
+      set center-web-patch patch center-web-x center-web-y
     ]
-    [
-      let center-web-patch patch-here
 
-
+    ; default target-patch is a web-patch
     set target-patch min-one-of patches with [pcolor = blue] [2 * distance center-web-patch + distance myself]
 
+    ; max distance between center web patch and another web patch
     let max-web-distance 0
     ask patch-set web-patches [
       if distance center-web-patch > max-web-distance [
@@ -116,12 +120,15 @@ to move-spider
       ]
     ]
 
-    set stalling-threshold movement-cost-spider * (ceiling distance center-web-patch + ceiling max-web-distance)
+    ; stalling threshold is set to such value that the spider can make it to the center (stallin spot) and back to the furthest
+    ; part of the web.
+    set stalling-threshold movement-cost-spider * (1 + ceiling distance center-web-patch + ceiling max-web-distance) + web-making-cost
 
     if energy < stalling-threshold [
       set target-patch center-web-patch
     ]
 
+    ; a fly on the web has the highest priority, so it overwrites the other target-patch if there is one.
     let temp-target-patch false
     ask patch-set web-patches[
       if fly-on-patch [
@@ -133,6 +140,7 @@ to move-spider
     ]
   ]
 
+  ; moves towards target patch until it's there
   ifelse patch-here != target-patch [
     face target-patch
     forward 1
@@ -154,7 +162,6 @@ to eat-flies
   ]
 end
 
-
 to reproduce
   if energy > reproduction-threshold [
     set energy energy - 50
@@ -168,9 +175,6 @@ to check-if-dead
   ]
 end
 
-to stay
-  set energy energy - 1
-end
 
 to spawn-flies
   create-flies 1 [
@@ -364,7 +368,7 @@ reproduction-threshold
 reproduction-threshold
 0
 1000
-95.0
+166.0
 1
 1
 NIL
