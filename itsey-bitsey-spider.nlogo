@@ -1,5 +1,5 @@
-breed [ spiders a-spider ]
-breed [ flies a-fly ]
+breed [ spiders spider]
+breed [ flies fly ]
 
 turtles-own [
   energy
@@ -46,7 +46,7 @@ to setup
     move-to one-of patches with [pxcor < 2 and pxcor > -2 and pycor < 2 and pycor > -2]
     set color black
     set shape "butterfly"
-    set energy 10
+    set energy 100
   ]
   reset-ticks
 end
@@ -58,6 +58,7 @@ to go
   ask flies [
     move-flies
     check-if-free
+    check-if-dead
   ]
   ask spiders [
     eat-flies
@@ -75,6 +76,7 @@ end
 to move-flies
   rt random 90
   lt random 90
+  set energy energy - 1
   ifelse pcolor != white [
     forward 1
   ]
@@ -101,6 +103,7 @@ end
 ; the spider can choose 3 different kinds of target-patches: a patch where he wants to make a web on, the center of the web and
 ; a web-patch with a fly on it.
 to move-spider
+  let stalling false
   if target-patch = false [
     let center-web-patch patch-here
     if not empty? web-patches [
@@ -124,7 +127,10 @@ to move-spider
     ; part of the web.
     set stalling-threshold movement-cost-spider * (1 + ceiling distance center-web-patch + ceiling max-web-distance) + web-making-cost
 
+
+
     if energy < stalling-threshold [
+      set stalling true
       set target-patch center-web-patch
     ]
 
@@ -133,6 +139,7 @@ to move-spider
     ask patch-set web-patches[
       if fly-on-patch [
         set temp-target-patch self
+        set stalling false
       ]
     ]
     if temp-target-patch != false [
@@ -148,6 +155,9 @@ to move-spider
   ]
   [
     set target-patch false
+    if stalling  [
+      set energy energy - 1
+    ]
   ]
 end
 
@@ -172,15 +182,6 @@ end
 to check-if-dead
   if energy < 0 [
     die
-  ]
-end
-
-to spawn-flies
-  create-flies 1 [
-    move-to one-of patches with [pcolor = grey]
-    set color black
-    set shape "butterfly"
-    set energy 10
   ]
 end
 
@@ -260,7 +261,7 @@ number-of-flies
 number-of-flies
 1
 100
-33.0
+70.0
 1
 1
 NIL
