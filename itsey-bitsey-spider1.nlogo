@@ -17,6 +17,7 @@ patches-own[
 
 globals [
   free-flies
+  percentage-covered
 ]
 
 to setup
@@ -70,6 +71,7 @@ to go
     move-spider
   ]
   my-update-plots
+  my-update-percentage
   tick
 end
 
@@ -157,7 +159,7 @@ to move-spider
   [
     set target-patch false
     if stalling  [
-      set energy energy - 1
+      set energy energy - 0.5
     ]
   ]
 end
@@ -186,6 +188,7 @@ to check-if-fly-dead
   ]
 end
 
+; checks if the spider is dead, if it is indeed dead, it will look for a neighboring spider to take over the web.
 to check-if-spider-dead
   if energy < 0 [
     let current-web patch-set web-patches
@@ -214,6 +217,10 @@ to check-if-spider-dead
     ]
     die
   ]
+end
+
+to my-update-percentage
+  set percentage-covered (count patches with [pcolor = white]) / (51 * 51 - 9)  * 100
 end
 
 to my-update-plots
@@ -277,7 +284,7 @@ number-of-spiders
 number-of-spiders
 1
 100
-49.0
+50.0
 1
 1
 NIL
@@ -292,7 +299,7 @@ number-of-flies
 number-of-flies
 1
 300
-100.0
+150.0
 1
 1
 NIL
@@ -343,7 +350,7 @@ movement-cost-spider
 movement-cost-spider
 1
 40
-10.0
+5.0
 1
 1
 NIL
@@ -369,22 +376,22 @@ web-making-cost
 web-making-cost
 1
 20
-10.0
+15.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-7
+9
 299
-191
+183
 332
 reproduction-threshold
 reproduction-threshold
 0
-400
-284.0
+600
+300.0
 1
 1
 NIL
@@ -412,9 +419,9 @@ SLIDER
 292
 starting-energy-fly
 starting-energy-fly
-30
-200
-100.0
+1
+600
+160.0
 1
 1
 NIL
@@ -423,10 +430,10 @@ HORIZONTAL
 MONITOR
 9
 578
-210
+191
 623
 Percentage of sky covered in web
-(count patches with [pcolor = white]) / (51 * 51 - 9)  * 100
+percentage-covered
 17
 1
 11
@@ -439,8 +446,8 @@ SLIDER
 reproduction-cost
 reproduction-cost
 0
-100
-48.0
+500
+200.0
 1
 1
 NIL
@@ -819,6 +826,36 @@ NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="starting-energy-fly" repetitions="40" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>go</go>
+    <metric>free-flies</metric>
+    <metric>percentage-covered</metric>
+    <enumeratedValueSet variable="movement-cost-spider">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="reproduction-threshold">
+      <value value="300"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="starting-energy-spider">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-spiders">
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="web-making-cost">
+      <value value="15"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="number-of-flies">
+      <value value="150"/>
+    </enumeratedValueSet>
+    <steppedValueSet variable="starting-energy-fly" first="30" step="10" last="300"/>
+    <enumeratedValueSet variable="reproduction-cost">
+      <value value="200"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
